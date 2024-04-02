@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="title"></title>
+    <style>
+
+/* Style for the weather container */
+.weatherPanel {
+    border-radius: 10px;
+    background-color: #f0f0f0;
+    padding: 20px;
+    padding-top: 1px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    font-family: Arial, sans-serif;
+    color: #333;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    line-height: 22px; /* Adjusting line-height to the height of the container */
+	min-height: 50px; /* Example of a minimum height of 100 pixels */
+}
+
+/* Style for icons */
+.weatherIcon {
+    position: absolute; /* Absolute positioning */
+    top: 10px; /* Distance from the top */
+    right: 10px; /* Distance from the right */
+    border-radius: 50%; /* Circular appearance */
+    background-color: white; /* Background color of the circle */
+    padding: 10px; /* Distance between the icon and the circle */
+}
+        /* Style for headings */
+        h1, h2, h3 {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Change the font according to your preferences */
+            color: #555; /* Change the text color according to your preferences */
+        }
+
+        /* Style for labels */
+        label {
+		font-family: Arial, Tahoma, Geneva, Verdana, sans-serif; /* Change the font according to your preferences */
+            font-weight: bold; /* Make the labels bold */
+            color: #666; /* Change the text color according to your preferences */
+			width: 8em;
+		display: inline-block; 
+        }
+
+        /* Style for buttons */
+        button {
+            background-color: #007bff; /* Change the background color of the button according to your preferences */
+            color: #fff; /* Change the text color of the button according to your preferences */
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: Arial, sans-serif; /* Change the font according to your preferences */
+			 font-weight: bold;
+        }
+
+        /* Hover effect for buttons */
+        button:hover {
+            background-color: #0056b3; /* Change the background color of the button on hover according to your preferences */
+        }
+		
+		.dateLabel {
+		
+		}
+		
+    </style>
+</head>
+<body>
+
+    <h1 id="appTitle"></h1>
+
+    <!-- Date/time field for morning -->
+    <p><label for="morningTime" class="dateLabel"> <span id="morningLabel"></span> </label>
+    <input type="datetime-local" id="morningTime" max="2030-12-31T23:59"></p>
+
+    <!-- Date/time field for afternoon -->
+	<p>
+    <label for="afternoonTime" class="dateLabel"> <span id="afternoonLabel"></span> </label>
+    <input type="datetime-local" id="afternoonTime" max="2030-12-31T23:59"></p>
+<p>
+    <button onclick="checkWeather()"> <span id="checkWeatherButton"></span> </button>
+</p>
+    <!-- Weather container for forecasts -->
+    <div id="weatherContainer">
+        <div id="morningPanel" class="weatherPanel"></div>
+        <div id="afternoonPanel" class="weatherPanel"></div>
+    </div>
+
+    <script>
+        // Translation function
+        function translate(key) {
+            const language = 'en'; // Example: Hardcoded to English here
+            const translations = {
+                "app_title": {
+                    "en": "Weather App",
+                    "de": "Wetter App"
+                },
+                "morning_label": {
+                    "en": "Morning:",
+                    "de": "Morgen:"
+                },
+                "afternoon_label": {
+                    "en": "Afternoon:",
+                    "de": "Nachmittag:"
+                },
+                "check_weather_button": {
+                    "en": "Check Weather",
+                    "de": "Wetter überprüfen"
+                },
+                "error_message": {
+                    "en": "Error fetching weather data.",
+                    "de": "Fehler beim Abrufen der Wetterdaten."
+                },
+                "morning": {
+                    "en": "Morning",
+                    "de": "Morgen"
+                },
+                "afternoon": {
+                    "en": "Afternoon",
+                    "de": "Nachmittag"
+                },
+                "description": {
+                    "en": "Description",
+                    "de": "Beschreibung"
+                },
+                "rain_probability": {
+                    "en": "Rain Probability",
+                    "de": "Regenwahrscheinlichkeit"
+                },
+                "temperature": {
+                    "en": "Temperature",
+                    "de": "Temperatur"
+                },
+                "wind_speed": {
+                    "en": "Wind Speed",
+                    "de": "Windgeschwindigkeit"
+                }
+                // Add more texts here...
+            };
+            return translations[key] ? translations[key][language] : key;
+        }
+
+        function setDefaultTimes() {
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(now.getDate() + 1);
+
+            const morningDefault = new Date(tomorrow.setHours(10, 0));
+            const afternoonDefault = new Date(tomorrow.setHours(19, 0));
+
+            document.getElementById('morningTime').value = morningDefault.toISOString().slice(0, 16);
+            document.getElementById('afternoonTime').value = afternoonDefault.toISOString().slice(0, 16);
+
+            // Set texts for labels and buttons
+            document.getElementById('morningLabel').innerText = translate('morning_label');
+            document.getElementById('afternoonLabel').innerText = translate('afternoon_label');
+            document.getElementById('checkWeatherButton').innerText = translate('check_weather_button');
+        }
+
+        // Set default times when the page loads
+        setDefaultTimes();
+
+        function checkWeather() {
+            const morningTime = new Date(document.getElementById('morningTime').value);
+            const afternoonTime = new Date(document.getElementById('afternoonTime').value);
+
+            fetch('get-forecast.php')
+                .then(response => response.text())
+                .then(data => {
+                    const weatherData = JSON.parse(data);
+                    const morningData = getWeatherDataForTime(weatherData, morningTime);
+                    const afternoonData = getWeatherDataForTime(weatherData, afternoonTime);
+                    displayWeatherResults(morningData, afternoonData);
+                })
+                .catch(error => {
+                    console.error('Error fetching weather data:', error);
+                    document.getElementById('morningPanel').innerText = translate('error_message');
+                    document.getElementById('afternoonPanel').innerText = translate('error_message');
+                });
+        }
+
+        function getWeatherDataForTime(data, time) {
+            const closestData = data.list.reduce((closest, current) => {
+                const currentTime = new Date(current.dt_txt);
+                const timeDiff = Math.abs(currentTime - time);
+
+                if (timeDiff < closest.timeDiff) {
+                    return { data: current, timeDiff: timeDiff };
+                } else {
+                    return closest;
+                }
+            }, { data: null, timeDiff: Infinity });
+
+            return closestData.data;
+        }
+
+        function displayWeatherResults(morningData, afternoonData) {
+            const morningPanel = document.getElementById('morningPanel');
+            const afternoonPanel = document.getElementById('afternoonPanel');
+
+            morningPanel.innerHTML = `
+                <h2>${translate('morning')}</h2>
+                <img class="weatherIcon" src="https://openweathermap.org/img/wn/${morningData.weather[0].icon}@2x.png" alt="Weather Icon">
+                <p>${translate('description')}: ${morningData.weather[0].description}</p>
+                <p>${translate('rain_probability')}: ${morningData.pop * 100}%</p>
+                <p>${translate('temperature')}: ${convertKelvinToCelsius(morningData.main.temp)} °C</p>
+                <p>${translate('wind_speed')}: ${morningData.wind.speed} m/s</p>
+            `;
+
+            afternoonPanel.innerHTML = `
+                <h2>${translate('afternoon')}</h2>
+                <img class="weatherIcon" src="https://openweathermap.org/img/wn/${afternoonData.weather[0].icon}@2x.png" alt="Weather Icon">
+                <p>${translate('description')}: ${afternoonData.weather[0].description}</p>
+                <p>${translate('rain_probability')}: ${afternoonData.pop * 100}%</p>
+                <p>${translate('temperature')}: ${convertKelvinToCelsius(afternoonData.main.temp)} °C</p>
+                <p>${translate('wind_speed')}: ${afternoonData.wind.speed} m/s</p>
+            `;
+        }
+
+        function convertKelvinToCelsius(kelvin) {
+            return (kelvin - 273.15).toFixed(2); 
+        }
+
+        // Set the title of the page
+        document.getElementById('title').innerText = translate('app_title');
+        // Set the title of the app
+        document.getElementById('appTitle').innerText = translate('app_title');
+    </script>
+
+</body>
+</html>
