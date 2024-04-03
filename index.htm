@@ -31,42 +31,57 @@
     background-color: white; /* Background color of the circle */
     padding: 10px; /* Distance between the icon and the circle */
 }
-        /* Style for headings */
-        h1, h2, h3 {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Change the font according to your preferences */
-            color: #555; /* Change the text color according to your preferences */
-        }
 
-        /* Style for labels */
-        label {
-		font-family: Arial, Tahoma, Geneva, Verdana, sans-serif; /* Change the font according to your preferences */
-            font-weight: bold; /* Make the labels bold */
-            color: #666; /* Change the text color according to your preferences */
-			width: 8em;
-		display: inline-block; 
-        }
+/* Style for headings */
+h1, h2, h3 {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Change the font according to your preferences */
+    color: #555; /* Change the text color according to your preferences */
+}
 
-        /* Style for buttons */
-        button {
-            background-color: #007bff; /* Change the background color of the button according to your preferences */
-            color: #fff; /* Change the text color of the button according to your preferences */
-            border: none;
-            border-radius: 5px;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-family: Arial, sans-serif; /* Change the font according to your preferences */
-			 font-weight: bold;
-        }
+/* Style for labels */
+label {
+    font-family: Arial, Tahoma, Geneva, Verdana, sans-serif; /* Change the font according to your preferences */
+    font-weight: bold; /* Make the labels bold */
+    color: #666; /* Change the text color according to your preferences */
+    width: 8em;
+    display: inline-block; 
+}
 
-        /* Hover effect for buttons */
-        button:hover {
-            background-color: #0056b3; /* Change the background color of the button on hover according to your preferences */
-        }
-		
-		.dateLabel {
-		
-		}
-		
+.dateLabel {
+    font-weight: bold;
+    color: #007bff; /* Change the color according to your preferences */
+    margin-right: 10px; /* Add a small margin between label and input field */
+}
+
+/* Style for buttons */
+button {
+    background-color: #007bff; /* Change the background color of the button according to your preferences */
+    color: #fff; /* Change the text color of the button according to your preferences */
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-family: Arial, sans-serif; /* Change the font according to your preferences */
+    font-weight: bold;
+}
+
+/* Hover effect for buttons */
+button:hover {
+    background-color: #0056b3; /* Change the background color of the button on hover according to your preferences */
+}
+
+/* Style for input fields */
+input[type="datetime-local"] {
+    padding: 6px; /* Add padding to center the text in the input field */
+    font-family: Arial, sans-serif; /* Use a readable font */
+    font-size: 14px; /* Change the font size according to your preferences */
+    border: 1px solid #ccc; /* Add a thinner border to define the input fields */
+    border-radius: 5px; /* Round the corners of the input fields */
+    background-color: #f9f9f9; /* Change the background color of the input fields */
+    width: 200px; /* Adjust the width of the input fields as needed */
+    height: 30px; /* Adjust the height of the input fields as needed */
+}
+
     </style>
 </head>
 <body>
@@ -84,16 +99,16 @@
 <p>
     <button onclick="checkWeather()"> <span id="checkWeatherButton"></span> </button>
 </p>
-    <!-- Weather container for forecasts -->
-    <div id="weatherContainer">
-        <div id="morningPanel" class="weatherPanel"></div>
-        <div id="afternoonPanel" class="weatherPanel"></div>
-    </div>
+<!-- Weather container for forecasts -->
+<div id="weatherContainer" style="display: none;">
+    <div id="morningPanel" class="weatherPanel"></div>
+    <div id="afternoonPanel" class="weatherPanel"></div>
+</div>
 
     <script>
         // Translation function
-        function translate(key) {
-            const language = 'en'; // Example: Hardcoded to English here
+        function translate(key) { 
+            const language = 'de'; // Example: Hardcoded to English here
             const translations = {
                 "app_title": {
                     "en": "Weather App",
@@ -108,8 +123,8 @@
                     "de": "Nachmittag:"
                 },
                 "check_weather_button": {
-                    "en": "Check Weather",
-                    "de": "Wetter überprüfen"
+                    "en": "Weather forecast",
+                    "de": "Wetter vorhersagen"
                 },
                 "error_message": {
                     "en": "Error fetching weather data.",
@@ -164,24 +179,32 @@
         // Set default times when the page loads
         setDefaultTimes();
 
-        function checkWeather() {
-            const morningTime = new Date(document.getElementById('morningTime').value);
-            const afternoonTime = new Date(document.getElementById('afternoonTime').value);
+function checkWeather() {
+    const morningTime = new Date(document.getElementById('morningTime').value);
+    const afternoonTime = new Date(document.getElementById('afternoonTime').value);
 
-            fetch('get-forecast.php')
-                .then(response => response.text())
-                .then(data => {
-                    const weatherData = JSON.parse(data);
-                    const morningData = getWeatherDataForTime(weatherData, morningTime);
-                    const afternoonData = getWeatherDataForTime(weatherData, afternoonTime);
-                    displayWeatherResults(morningData, afternoonData);
-                })
-                .catch(error => {
-                    console.error('Error fetching weather data:', error);
-                    document.getElementById('morningPanel').innerText = translate('error_message');
-                    document.getElementById('afternoonPanel').innerText = translate('error_message');
-                });
-        }
+    fetch('get-forecast.php')
+        .then(response => response.text())
+        .then(data => {
+            const weatherData = JSON.parse(data);
+            const morningData = getWeatherDataForTime(weatherData, morningTime);
+            const afternoonData = getWeatherDataForTime(weatherData, afternoonTime);
+            displayWeatherResults(morningData, afternoonData);
+
+            // Check if weather data is available for both morning and afternoon
+            if (morningData && afternoonData) {
+                document.getElementById('weatherContainer').style.display = 'block';
+            } else {
+                document.getElementById('weatherContainer').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching weather data:', error);
+            document.getElementById('morningPanel').innerText = translate('error_message');
+            document.getElementById('afternoonPanel').innerText = translate('error_message');
+            document.getElementById('weatherContainer').style.display = 'none'; // Hide weather container on error
+        });
+}
 
         function getWeatherDataForTime(data, time) {
             const closestData = data.list.reduce((closest, current) => {
