@@ -1,8 +1,15 @@
 <?php
 
+// Custom settings. 
+$latitude = 51.421121;
+$longitude = 6.820335;
+$language = 'de'; // Some weather results will be language specific
+$apiKey = ''; // API key from openweathermap
+
 // Function to fetch weather data from the API
 function fetchWeatherData() {
-    $apiUrl = 'https://api.openweathermap.org/data/2.5/forecast?lat=51.421121&lon=6.820335&lang=de&appid=<Your API Key>';
+    global $latitude, $longitude, $language, $apiKey;
+    $apiUrl = "https://api.openweathermap.org/data/2.5/forecast?lat=$latitude&lon=$longitude&lang=$language&appid=$apiKey";
     $response = file_get_contents($apiUrl);
     return $response;
 }
@@ -41,6 +48,5 @@ if (file_exists($forecastFilePath)) {
 
 // Return weather data
 echo loadWeatherData();
-
 
 ?>
