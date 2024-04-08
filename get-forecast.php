@@ -35,8 +35,8 @@ if (file_exists($forecastFilePath)) {
     $lastModifiedTimestamp = filemtime($forecastFilePath);
     $timeDifference = $currentTimestamp - $lastModifiedTimestamp;
 
-    // If the last forecast is older than 3 hours, update
-    if ($timeDifference >= 10800) {
+    // If the last forecast is older than 1 hour, update
+    if ($timeDifference >= 3600) {
         $weatherData = fetchWeatherData();
         saveWeatherData($weatherData);
     }
