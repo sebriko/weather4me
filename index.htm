@@ -85,8 +85,8 @@
         const panelData = {
             "panels": [
                 {
-                    "id": "morning",
-                    "label": "Morning",
+                    "id": "tomorrow_morning",
+                    "label": "Tomorrow morning",
                     "dayOffset": 1,
                     "time": "10:00",
                     "showRainProbability": true,
@@ -95,8 +95,8 @@
                     "showIcon": true
                 },
                 {
-                    "id": "afternoon",
-                    "label": "Afternoon",
+                    "id": "tomorrow_afternoon",
+                    "label": "Tomorrow afternoon",
                     "dayOffset": 1,
                     "time": "19:00",
                     "showRainProbability": true,
@@ -105,8 +105,8 @@
                     "showIcon": true
                 },
                 {
-                    "id": "evening",
-                    "label": "Evening",
+                    "id": "day_after_tomorrow_evening",
+                    "label": "Day after tomorrow evening",
                     "dayOffset": 2,
                     "time": "21:00",
                     "showRainProbability": false,
@@ -123,9 +123,9 @@
                 "app_title": {"en": "Weather App", "de": "Wetter App"},
                 "check_weather_button": {"en": "Weather forecast", "de": "Wetter vorhersagen"},
                 "error_message": {"en": "Error fetching weather data.", "de": "Fehler beim Abrufen der Wetterdaten."},
-                "morning": {"en": "Morning", "de": "Morgen"},
-                "afternoon": {"en": "Afternoon", "de": "Nachmittag"},
-                "evening": {"en": "Evening", "de": "Abend"},
+                "tomorrow_morning": {"en": "Tomorrow morning", "de": "Morgen früh"},
+                "tomorrow_afternoon": {"en": "Tomorrow afternoon", "de": "Morgen Nachmittag"},
+                "day_after_tomorrow_evening": {"en": "Day after tomorrow evening", "de": "Übermorgen Abend"},
                 "description": {"en": "Description", "de": "Beschreibung"},
                 "rain_probability": {"en": "Rain Probability", "de": "Regenwahrscheinlichkeit"},
                 "temperature": {"en": "Temperature", "de": "Temperatur"},
@@ -140,7 +140,12 @@
             panelData.panels.forEach(panel => {
                 const now = new Date();
                 const targetDate = new Date(now);
-                targetDate.setDate(now.getDate() + panel.dayOffset);
+				
+				if (targetDate.getHours() < 4) {
+				panel.dayOffset = panel.dayOffset-1;
+				}
+				
+                targetDate.setDate(targetDate.getDate() + panel.dayOffset); 
 
                 const [hours, minutes] = panel.time.split(':');
                 targetDate.setHours(hours, minutes);
