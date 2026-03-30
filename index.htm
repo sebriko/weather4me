@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="title"></title>
+    <style>
+        .weatherPanel {
+            border-radius: 10px;
+            background-color: #f0f0f0;
+            padding: 20px;
+            padding-top: 1px;
+            font-family: Arial, sans-serif;
+            color: #333;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            line-height: 22px;
+            min-height: 50px;
+            flex: 1 1 200px;
+        }
+        .weatherIcon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            border-radius: 50%;
+            background-color: white;
+            padding: 10px;
+        }
+        h1, h2, h3 {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #555;
+        }
+        .dateLabel {
+            font-weight: bold;
+            color: #007bff;
+            margin-top: 0;
+        }
+        #weatherContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="appTitle"></h1>
+
+    <div id="weatherContainer"></div>
+
+    <script>
+        const panelData = {
+            "panels": [
+                {
+                    "id": "tomorrow_morning",
+                    "dayOffset": 1,
+                    "time": "10:00",
+                    "showRainProbability": true,
+                    "showWindSpeed": true,
+                    "showDescription": true,
+                    "showIcon": true
+                },
+                {
+                    "id": "tomorrow_afternoon",
+                    "dayOffset": 1,
+                    "time": "19:00",
+                    "showRainProbability": true,
+                    "showWindSpeed": false,
+                    "showDescription": true,
+                    "showIcon": true
+                },
+                {
+                    "id": "day_after_tomorrow_evening",
+                    "dayOffset": 2,
+                    "time": "21:00",
+                    "showRainProbability": false,
+                    "showWindSpeed": true,
+                    "showDescription": true,
+                    "showIcon": true
+                }
+            ]
+        };
+
+        function translate(key) {
+            const language = 'de';
+            const translations = {
+                "app_title": {"en": "weather4me", "de": "weather4me"},
+                "error_message": {"en": "Error fetching weather data.", "de": "Fehler beim Abrufen der Wetterdaten."},
+                "tomorrow_morning": {"en": "Tomorrow morning", "de": "Morgen früh"},
+                "tomorrow_afternoon": {"en": "Tomorrow afternoon", "de": "Morgen Nachmittag"},
+                "day_after_tomorrow_evening": {"en": "Day after tomorrow evening", "de": "Übermorgen Abend"},
+                "description": {"en": "Description", "de": "Beschreibung"},
+                "rain_probability": {"en": "Rain Probability", "de": "Regenwahrscheinlichkeit"},
+                "temperature": {"en": "Temperature", "de": "Temperatur"},
+                "wind_speed": {"en": "Wind Speed", "de": "Windgeschwindigkeit"}
+            };
+            return translations[key] ? translations[key][language] : key;
+        }
+
+        function getPanelDate(panel) {
+            const now = new Date();
+            const targetDate = new Date(now);
+            let offset = panel.dayOffset;
+            if (targetDate.getHours() < 4) {
+                offset = offset - 1;
+            }
+            targetDate.setDate(targetDate.getDate() + offset);
+            const [hours, minutes] = panel.time.split(':');
+            targetDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            return targetDate;
+        }
+
+        function formatDate(date) {
+            return date.toLocaleString('de-DE', {
+                weekday: 'short',
+                day: '2-digit',
+                month: 'long',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function checkWeather() {
+            fetch('get-forecast.php')
+                .then(response => response.json())
+                .then(weatherData => {
+                    const weatherContainer = document.getElementById('weatherContainer');
+                    weatherContainer.innerHTML = '';
+
+                    panelData.panels.forEach(panel => {
+                        const panelTime = getPanelDate(panel);
+                        const data = getWeatherDataForTime(weatherData, panelTime);
+
+                        const panelDiv = document.createElement('div');
+                        panelDiv.classList.add('weatherPanel');
+                        panelDiv.innerHTML = `
+                            <h2>${translate(panel.id.toLowerCase())}</h2>
+                            <p class="dateLabel">${formatDate(panelTime)}</p>
+                            ${panel.showIcon ? `<img class="weatherIcon" src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" alt="Weather Icon">` : ''}
+                            ${panel.showDescription ? `<p>${translate('description')}: ${data.weather[0].description}</p>` : ''}
+                            ${panel.showRainProbability ? `<p>${translate('rain_probability')}: ${data.pop * 100}%</p>` : ''}
+                            <p>${translate('temperature')}: ${convertKelvinToCelsius(data.main.temp)} °C</p>
+                            ${panel.showWindSpeed ? `<p>${translate('wind_speed')}: ${data.wind.speed} m/s</p>` : ''}
+                        `;
+                        weatherContainer.appendChild(panelDiv);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching weather data:', error);
+                    const weatherContainer = document.getElementById('weatherContainer');
+                    weatherContainer.innerHTML = `<div class="weatherPanel">${translate('error_message')}</div>`;
+                });
+        }
+
+        function getWeatherDataForTime(data, time) {
+            const closestData = data.list.reduce((closest, current) => {
+                const currentTime = new Date(current.dt_txt);
+                const timeDiff = Math.abs(currentTime - time);
+                return timeDiff < closest.timeDiff ? { data: current, timeDiff: timeDiff } : closest;
+            }, { data: null, timeDiff: Infinity });
+            return closestData.data;
+        }
+
+        function convertKelvinToCelsius(kelvin) {
+            return (kelvin - 273.15).toFixed(2);
+        }
+
+        document.getElementById('title').innerText = translate('app_title');
+        document.getElementById('appTitle').innerText = translate('app_title');
+
+        checkWeather();
+    </script>
+</body>
+</html>
